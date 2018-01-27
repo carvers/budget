@@ -1,0 +1,48 @@
+-- +migrate Up
+CREATE TABLE ofx_transactions (
+	id VARCHAR,
+	source VARCHAR,
+	source_account_id VARCHAR,
+	source_account_type VARCHAR,
+	transaction_type VARCHAR,
+	date_posted TIMESTAMPTZ,
+	date_user TIMESTAMPTZ,
+	date_available TIMESTAMPTZ,
+	amount BIGINT,
+	fi_tid VARCHAR,
+	server_tid VARCHAR,
+	check_num VARCHAR,
+	ref_num VARCHAR,
+	sic BIGINT,
+	payee_id VARCHAR,
+	name VARCHAR,
+	extended_name VARCHAR,
+	memo VARCHAR,
+	inv_401k_source VARCHAR,
+	currency VARCHAR,
+	original_currency VARCHAR,
+	correct_fi_tid VARCHAR,
+	correct_action VARCHAR,
+	payee_name VARCHAR,
+	payee_addr1 VARCHAR,
+	payee_addr2 VARCHAR,
+	payee_addr3 VARCHAR,
+	payee_city VARCHAR,
+	payee_state VARCHAR,
+	payee_postal_code VARCHAR,
+	payee_country VARCHAR,
+	payee_phone VARCHAR,
+	bank_account_to_bank_id VARCHAR,
+	bank_account_to_branch_id VARCHAR,
+	bank_account_to_account_id VARCHAR,
+	bank_account_to_account_type VARCHAR,
+	bank_account_to_account_key VARCHAR,
+	credit_card_account_to_account_id VARCHAR,
+	credit_card_account_to_account_key VARCHAR,
+
+	PRIMARY KEY(id, source, source_account_id, source_account_type),
+	UNIQUE(source, source_account_id, source_account_type, fi_tid)
+);
+
+-- +migrate Down
+DROP TABLE ofx_transactions;
