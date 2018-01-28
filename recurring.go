@@ -6,6 +6,7 @@ type Recurring struct {
 	ID         string
 	Name       string
 	AccountIDs pqarrays.StringArray
+	Finished   bool
 }
 
 func (r Recurring) GetSQLTableName() string {
@@ -15,6 +16,7 @@ func (r Recurring) GetSQLTableName() string {
 type RecurringChange struct {
 	Name       *string
 	AccountIDs []string
+	Finished   *bool
 }
 
 func (c RecurringChange) IsEmpty() bool {
