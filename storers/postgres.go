@@ -46,55 +46,7 @@ func (p postgres) ImportTransactions(t []budget.Transaction) error {
 func listTransactionsSQL(f budget.TransactionFilters) *pan.Query {
 	var t budget.Transaction
 	q := pan.New("SELECT " + pan.Columns(t).String() + " FROM " + pan.Table(t))
-	if len(f.SourceAccountIDs) > 0 {
-		q.Where()
-		iface := make([]interface{}, 0, len(f.SourceAccountIDs))
-		for _, id := range f.SourceAccountIDs {
-			iface = append(iface, id)
-		}
-		q.In(t, "SourceAccountID", iface...)
-	}
-	if len(f.TransactionTypes) > 0 {
-		q.Where()
-		iface := make([]interface{}, 0, len(f.TransactionTypes))
-		for _, typ := range f.TransactionTypes {
-			iface = append(iface, typ)
-		}
-		q.In(t, "TransactionType", iface...)
-	}
-	if f.DatePostedBefore != nil {
-		q.Where()
-		q.Comparison(t, "DatePosted", "<", *f.DatePostedBefore)
-	}
-	if f.DatePostedAfter != nil {
-		q.Where()
-		q.Comparison(t, "DatePosted", ">", *f.DatePostedAfter)
-	}
-	if f.Amount != nil {
-		q.Where()
-		q.Comparison(t, "Amount", "=", *f.Amount)
-	}
-	if f.AmountGreaterThan != nil {
-		q.Where()
-		q.Comparison(t, "Amount", ">", *f.AmountGreaterThan)
-	}
-	if f.AmountLessThan != nil {
-		q.Where()
-		q.Comparison(t, "Amount", "<", *f.AmountLessThan)
-	}
-	if f.CheckNum != nil {
-		q.Where()
-		q.Comparison(t, "CheckNum", "=", *f.CheckNum)
-	}
-	if f.RefNum != nil {
-		q.Where()
-		q.Comparison(t, "RefNum", "=", *f.RefNum)
-	}
-	if f.Name != nil {
-		q.Where()
-		q.Comparison(t, "Name", "=", *f.Name)
-	}
-	q.Flush(" AND ")
+	addTransactionFiltersToQuery(q, f)
 	return q
 }
 
@@ -124,8 +76,29 @@ func (p postgres) ListTransactions(f budget.TransactionFilters) ([]budget.Transa
 	return transactions, nil
 }
 
-func (p postgres) UpdateTransaction(id string, change budget.TransactionChange) error {
-	return nil
+func updateTransactionsSQL(tf budget.TransactionFilters, change budget.TransactionChange) *pan.Query {
+	var t budget.Transaction
+	q := pan.New("UPDATE " + pan.Table(t) + " SET")
+	if change.RecurringID != nil {
+		q.Comparison(t, "RecurringID", "=", *change.RecurringID)
+	}
+	q.Flush(", ")
+	addTransactionFiltersToQuery(q, tf)
+	return q
+}
+
+func (p postgres) UpdateTransactions(tf budget.TransactionFilters, change budget.TransactionChange) error {
+	if change.IsEmpty() {
+		return nil
+	}
+	query := updateTransactionsSQL(tf, change)
+	queryStr, err := query.PostgreSQLString()
+	if err != nil {
+		return err
+	}
+	p.log.WithField("query", queryStr).Debug("updating transactions")
+	_, err = p.db.Exec(queryStr, query.Args()...)
+	return err
 }
 
 func createAccountSQL(account budget.Account) *pan.Query {
@@ -268,4 +241,156 @@ func (p postgres) ListAccounts() ([]budget.Account, error) {
 		return nil, err
 	}
 	return accts, nil
+}
+
+func createRecurringsSQL(recurrings []budget.Recurring) *pan.Query {
+	pannable := make([]pan.SQLTableNamer, 0, len(recurrings))
+	for _, r := range recurrings {
+		pannable = append(pannable, r)
+	}
+	q := pan.Insert(pannable...)
+	q.Expression("ON CONFLICT ON CONSTRAINT " + pan.Table(recurrings[0]) + "_pkey")
+	q.Expression("DO NOTHING")
+	return q.Flush(" ")
+}
+
+func (p postgres) CreateRecurrings(recurrings []budget.Recurring) error {
+	query := createRecurringsSQL(recurrings)
+	queryStr, err := query.PostgreSQLString()
+	if err != nil {
+		return err
+	}
+	p.log.WithField("query", queryStr).WithField("num_groups", len(recurrings)).
+		Debug("creating recurring groups")
+	_, err = p.db.Exec(queryStr, query.Args()...)
+	return err
+}
+
+func listRecurringsSQL() *pan.Query {
+	var recur budget.Recurring
+	q := pan.New("SELECT " + pan.Columns(recur).String() + " FROM " + pan.Table(recur))
+	q.OrderByDesc(pan.Column(recur, "ID"))
+	return q.Flush(" ")
+}
+
+func (p postgres) ListRecurrings() ([]budget.Recurring, error) {
+	query := listRecurringsSQL()
+	queryStr, err := query.PostgreSQLString()
+	if err != nil {
+		return nil, err
+	}
+	p.log.WithField("query", queryStr).Debug("listing recurring groups")
+	rows, err := p.db.Query(queryStr, query.Args()...)
+	if err != nil {
+		return nil, err
+	}
+	var recurs []budget.Recurring
+	for rows.Next() {
+		var recur budget.Recurring
+		err = pan.Unmarshal(rows, &recur)
+		if err != nil {
+			return recurs, err
+		}
+		recurs = append(recurs, recur)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return recurs, nil
+}
+
+func updateRecurringSQL(id string, change budget.RecurringChange) *pan.Query {
+	// TODO(paddy): write SQL for updating a recurring group
+	return nil
+}
+
+func (p postgres) UpdateRecurring(id string, change budget.RecurringChange) error {
+	if change.IsEmpty() {
+		return nil
+	}
+	query := updateRecurringSQL(id, change)
+	queryStr, err := query.PostgreSQLString()
+	if err != nil {
+		return err
+	}
+	p.log.WithField("query", queryStr).WithField("id", id).Debug("updating recurring group")
+	_, err = p.db.Exec(queryStr, query.Args()...)
+	return err
+}
+
+func addTransactionFiltersToQuery(q *pan.Query, f budget.TransactionFilters) {
+	var t budget.Transaction
+	if len(f.IDs) > 0 {
+		q.Where()
+		iface := make([]interface{}, 0, len(f.IDs))
+		for _, id := range f.IDs {
+			iface = append(iface, id)
+		}
+		q.In(t, "ID", iface...)
+	}
+	if f.AccountIDs != nil {
+		if len(f.AccountIDs) > 0 {
+			q.Where()
+			iface := make([]interface{}, 0, len(f.AccountIDs))
+			for _, id := range f.AccountIDs {
+				iface = append(iface, id)
+			}
+			q.In(t, "AccountID", iface...)
+		} else {
+			// specifically set an empty array, meaning not set
+			q.Where()
+			q.Comparison(t, "AccountID", "=", "")
+		}
+	}
+	if f.TransactionTypes != nil {
+		if len(f.TransactionTypes) > 0 {
+			q.Where()
+			iface := make([]interface{}, 0, len(f.TransactionTypes))
+			for _, typ := range f.TransactionTypes {
+				iface = append(iface, typ)
+			}
+			q.In(t, "TransactionType", iface...)
+		} else {
+			// specifically set an empty array, meaning not set
+			q.Where()
+			q.Comparison(t, "TransactionType", "=", "")
+		}
+	}
+	if f.DatePostedBefore != nil {
+		q.Where()
+		q.Comparison(t, "DatePosted", "<", *f.DatePostedBefore)
+	}
+	if f.DatePostedAfter != nil {
+		q.Where()
+		q.Comparison(t, "DatePosted", ">", *f.DatePostedAfter)
+	}
+	if f.Amount != nil {
+		q.Where()
+		q.Comparison(t, "Amount", "=", *f.Amount)
+	}
+	if f.AmountGreaterThan != nil {
+		q.Where()
+		q.Comparison(t, "Amount", ">", *f.AmountGreaterThan)
+	}
+	if f.AmountLessThan != nil {
+		q.Where()
+		q.Comparison(t, "Amount", "<", *f.AmountLessThan)
+	}
+	if f.CheckNum != nil {
+		q.Where()
+		q.Comparison(t, "CheckNum", "=", *f.CheckNum)
+	}
+	if f.RefNum != nil {
+		q.Where()
+		q.Comparison(t, "RefNum", "=", *f.RefNum)
+	}
+	if f.Name != nil {
+		q.Where()
+		q.Comparison(t, "Name", "=", *f.Name)
+	}
+	if f.RecurringID != nil {
+		q.Where()
+		q.Comparison(t, "RecurringID", "=", *f.RecurringID)
+	}
+	q.Flush(" AND ")
 }

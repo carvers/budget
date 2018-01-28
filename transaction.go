@@ -42,6 +42,8 @@ type Transaction struct {
 	Memo string
 	// Source of cash for this transaction, if a 401k transaction.
 	Inv401kSource string `sql_column:"inv_401k_source"`
+	// ID of the Recurring group to associate this transaction with.
+	RecurringID string
 
 	// The three letter code for the currency the amount is specified in
 	Currency string
@@ -107,7 +109,8 @@ func TransactionsByDate(t []Transaction) {
 }
 
 type TransactionFilters struct {
-	SourceAccountIDs  []string
+	IDs               []string
+	AccountIDs        []string
 	TransactionTypes  []string
 	DatePostedBefore  *time.Time
 	DatePostedAfter   *time.Time
@@ -117,7 +120,16 @@ type TransactionFilters struct {
 	CheckNum          *string
 	RefNum            *string
 	Name              *string
+	RecurringID       *string
 }
 
 type TransactionChange struct {
+	RecurringID *string
+}
+
+func (c TransactionChange) IsEmpty() bool {
+	if c.RecurringID != nil {
+		return false
+	}
+	return true
 }

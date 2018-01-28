@@ -50,6 +50,7 @@ func main() {
 	pg := storers.NewPostgres(db, d.Log)
 	d.Transactions = pg
 	d.Accounts = pg
+	d.Recurring = pg
 
 	// Set up vault connection
 	vaultAddr := os.Getenv("VAULT_ADDR")

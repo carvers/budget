@@ -18,15 +18,22 @@ type AccountsSensitiveDetailsStorer interface {
 	DeleteAccountSensitiveDetails(string) error
 }
 
+type RecurringStorer interface {
+	CreateRecurrings([]Recurring) error
+	ListRecurrings() ([]Recurring, error)
+	UpdateRecurring(string, RecurringChange) error
+}
+
 type TransactionsStorer interface {
 	ImportTransactions([]Transaction) error
 	ListTransactions(TransactionFilters) ([]Transaction, error)
-	UpdateTransaction(string, TransactionChange) error
+	UpdateTransactions(TransactionFilters, TransactionChange) error
 }
 
 type Dependencies struct {
 	Log               *log.Logger
 	Accounts          AccountsStorer
 	AccountsSensitive AccountsSensitiveDetailsStorer
+	Recurring         RecurringStorer
 	Transactions      TransactionsStorer
 }
