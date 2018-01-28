@@ -197,9 +197,15 @@
   revision = "c87af80f3cc5036b55b83d77171e156791085e2e"
   version = "v1.7.1"
 
+[[projects]]
+  branch = "master"
+  name = "impractical.co/pqarrays"
+  packages = ["."]
+  revision = "970404683d9835203a7cafe77d40dcf07b99d983"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8c3d6daa6af3d019e6418e1379c1e158b0e6b1ecedbb1188f1a5a11c33c929ee"
+  inputs-digest = "c4422898888c834d27657227d361dcc854bed26a7342aaaaa231c233e62cd4da"
   solver-name = "gps-cdcl"
   solver-version = 1
