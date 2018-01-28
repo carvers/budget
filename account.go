@@ -14,6 +14,7 @@ type Account struct {
 	BankORG     string
 	BankFID     string
 	BankURL     string
+	Sync        bool
 }
 
 func (a Account) GetSQLTableName() string {
@@ -27,6 +28,7 @@ type AccountChange struct {
 	BankORG     *string
 	BankFID     *string
 	BankURL     *string
+	Sync        *bool
 }
 
 func (a AccountChange) IsEmpty() bool {

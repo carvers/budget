@@ -2,6 +2,7 @@
 // sources:
 // sql/20180124_init.sql
 // sql/20180126_add_accounts.sql
+// sql/20180127_sensitive_data.sql
 // DO NOT EDIT!
 
 package migrations
@@ -109,6 +110,26 @@ func sql20180126_add_accountsSql() (*asset, error) {
 	return a, nil
 }
 
+var _sql20180127_sensitive_dataSql = []byte("\x1f\x8b\x08\x00\x00\x09\x6e\x88\x00\xff\x94\x92\x41\x4e\xeb\x30\x10\x86\xd7\xcf\xa7\x98\xe5\x43\xd0\x13\x64\xe5\x36\x91\xa8\x14\x1c\x30\x09\x5b\xcb\x72\xdc\xca\x02\xec\xc8\x9e\x00\xbe\x3d\xaa\x9a\x54\x0e\x49\x5b\x58\x45\x9a\x7c\x1a\xcf\x7c\xff\xac\x56\x70\xfb\x6e\xf6\x5e\xa2\x86\xa6\x23\xb4\xac\x0b\x0e\x35\x5d\x97\x05\xb8\xdd\x97\x40\x2f\x6d\x90\x0a\x8d\xb3\x01\x72\x5e\x3d\xc2\xa6\x62\xcf\x35\xa7\x5b\x56\xcf\x00\x11\x5c\xef\x95\x1e\x3f\x52\x29\xd7\x5b\x14\xa6\xfd\x59\xc1\x28\x5e\x75\xbc\x23\xff\x86\x8e\x65\xf3\xc0\xe0\xc8\x2c\x16\x93\x56\x97\xff\x63\xec\x0e\x1d\x68\x9e\x8f\x80\xd7\xaa\xf7\xde\xd8\xbd\x30\x2d\xbc\x50\xbe\xb9\xa7\xfc\x44\x9c\xdf\xa4\xf3\xfa\x43\x5b\x14\x6d\xdf\xbd\x19\x25\x51\x07\x68\xd8\xf6\xa9\x29\xe0\x7f\x32\x0b\xec\x8c\x40\xd3\xde\x64\x64\x22\x6e\x20\x02\x24\x73\x84\x68\x15\xac\xab\xaa\x2c\x28\xcb\x08\x49\xb5\xe7\xee\xd3\x5e\x16\x7f\x6d\xda\xbf\x79\x3f\x6d\x32\x18\x5f\x90\xbc\xe8\x75\xdc\x76\x2a\xf8\x48\xce\xd4\x2e\xa7\xf7\x2b\xec\xf0\x58\x02\x5e\xbd\xba\x79\x56\xe7\xf2\x98\x5c\x4e\xb4\x2a\x23\xdf\x01\x00\x00\xff\xff\x8a\x60\x67\xee\xff\x02\x00\x00")
+
+func sql20180127_sensitive_dataSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_sql20180127_sensitive_dataSql,
+		"sql/20180127_sensitive_data.sql",
+	)
+}
+
+func sql20180127_sensitive_dataSql() (*asset, error) {
+	bytes, err := sql20180127_sensitive_dataSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "sql/20180127_sensitive_data.sql", size: 767, mode: os.FileMode(436), modTime: time.Unix(1517111105, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -163,6 +184,7 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"sql/20180124_init.sql": sql20180124_initSql,
 	"sql/20180126_add_accounts.sql": sql20180126_add_accountsSql,
+	"sql/20180127_sensitive_data.sql": sql20180127_sensitive_dataSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -208,6 +230,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"sql": &bintree{nil, map[string]*bintree{
 		"20180124_init.sql": &bintree{sql20180124_initSql, map[string]*bintree{}},
 		"20180126_add_accounts.sql": &bintree{sql20180126_add_accountsSql, map[string]*bintree{}},
+		"20180127_sensitive_data.sql": &bintree{sql20180127_sensitive_dataSql, map[string]*bintree{}},
 	}},
 }}
 

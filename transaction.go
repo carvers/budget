@@ -12,13 +12,6 @@ type Transaction struct {
 	// ID of the Account this Transaction belongs to
 	AccountID string
 
-	// Bank the transaction is coming from
-	Source string
-	// Account at that bank
-	SourceAccountID string
-	// Type of account this is (checking, savings, credit, etc.)
-	SourceAccountType string
-
 	// Type of transaction
 	TransactionType string
 	// Date the transaction was posted

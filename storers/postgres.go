@@ -26,9 +26,7 @@ func importTransactionsSQL(t []budget.Transaction) *pan.Query {
 	}
 	q := pan.Insert(pannable...)
 	q.Expression("ON CONFLICT (")
-	q.Expression(pan.Column(t[0], "Source") + ",")
-	q.Expression(pan.Column(t[0], "SourceAccountID") + ",")
-	q.Expression(pan.Column(t[0], "SourceAccountType") + ",")
+	q.Expression(pan.Column(t[0], "AccountID") + ",")
 	q.Expression(pan.Column(t[0], "FiTID") + " )")
 	q.Expression("DO NOTHING")
 	return q.Flush(" ")

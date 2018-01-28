@@ -79,6 +79,11 @@ func main() {
 	}
 
 	for _, account := range accounts {
+		if !account.Sync {
+			d.Log.WithField("account", account.ID).WithField("name", account.Name).
+				Info("not configured to sync, ignoring")
+			continue
+		}
 		// retrieve the sensitive info for the account from Vault
 		d.Log.WithField("account", account.ID).WithField("storer", fmt.Sprintf("%T", d.AccountsSensitive)).
 			Info("fetching account's sensitive details")
@@ -94,6 +99,12 @@ func main() {
 		if err != nil {
 			d.Log.WithField("account", account.ID).WithError(err).Error("error fetching transactions")
 			continue
+		}
+
+		// set our account ID on the transactions
+		for pos, txn := range transactions {
+			txn.AccountID = account.ID
+			transactions[pos] = txn
 		}
 		d.Log.WithField("account", account.ID).WithField("storer", fmt.Sprintf("%T", d.Transactions)).
 			WithField("num_transactions", len(transactions)).

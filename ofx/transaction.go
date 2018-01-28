@@ -196,9 +196,6 @@ func transactionsFromStatement(stmt *ofxgo.StatementResponse) ([]budget.Transact
 		if err != nil {
 			return nil, err
 		}
-		txn.Source = string(stmt.BankAcctFrom.BankID)
-		txn.SourceAccountID = string(stmt.BankAcctFrom.AcctID)
-		txn.SourceAccountType = stmt.BankAcctFrom.AcctType.String()
 		results = append(results, txn)
 	}
 	return results, nil
@@ -211,7 +208,6 @@ func transactionsFromCCStatement(stmt *ofxgo.CCStatementResponse) ([]budget.Tran
 		if err != nil {
 			return nil, err
 		}
-		txn.SourceAccountID = string(stmt.CCAcctFrom.AcctID)
 		results = append(results, txn)
 	}
 	return results, nil
