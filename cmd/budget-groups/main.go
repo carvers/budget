@@ -21,7 +21,7 @@ func main() {
 	lvl, err := log.ParseLevel(level)
 	if err != nil {
 		fmt.Printf("Invalid log level %q; please set LOG_LEVEL to %q, %q, %q, %q, or %q.",
-			log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(),
+			level, log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(),
 			log.ErrorLevel.String(), log.FatalLevel.String())
 		os.Exit(1)
 	}
