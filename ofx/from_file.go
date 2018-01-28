@@ -1,45 +1,51 @@
 package ofx
 
-/*
-func ImportFromFile(path, institution string) ([]Transaction, error) {
-	f, err := os.Open(path)
+import (
+	"io"
+
+	"github.com/aclindsa/ofxgo"
+	"github.com/carvers/budget"
+	"github.com/pkg/errors"
+)
+
+func FromReader(r io.Reader) (budget.AccountSensitiveDetails, []budget.Transaction, error) {
+	var asd budget.AccountSensitiveDetails
+	resp, err := ofxgo.ParseResponse(r)
 	if err != nil {
-		return nil, err
+		return asd, nil, errors.Wrap(err, "error parsing file")
 	}
-	resp, err := ofxgo.ParseResponse(f)
-	f.Close()
-	if err != nil {
-		return nil, err
+	if rc, ok := r.(io.ReadCloser); ok {
+		rc.Close()
 	}
-	var transactions []Transaction
-	for _, msg := range resp.CreditCard {
-		switch msg.(type) {
-		case *ofxgo.CCStatementResponse:
-			stmt := msg.(*ofxgo.CCStatementResponse)
-			for _, t := range stmt.BankTranList.Transactions {
-				txn := TransactionFromOFX(t)
-				txn.CreditCardAccountFromAccountID = stmt.CCAcctFrom.AcctID.String()
-				txn.CreditCardAccountFromAccountKey = stmt.CCAcctFrom.AcctKey.String()
-				txn.AccountID = txn.CreditCardAccountFromAccountID
-				txn.Institution = institution
-				transactions = append(transactions, txn)
-			}
-		default:
-			return nil, fmt.Errorf("unknown message type %T", msg)
-		}
-	}
+	var transactions []budget.Transaction
 	for _, msg := range resp.Bank {
-		switch msg.(type) {
-		case *ofxgo.StatementResponse:
-			stmt := msg.(*ofxgo.StatementResponse)
-			for _, t := range stmt.BankTranList.Transactions {
-				txn := TransactionFromOFX(t)
-				transactions = append(transactions, txn)
+		if stmt, ok := msg.(*ofxgo.StatementResponse); ok {
+			asd = budget.AccountSensitiveDetails{
+				AccountID: string(stmt.BankAcctFrom.AcctID),
+				BankID:    string(stmt.BankAcctFrom.BankID),
 			}
-		default:
-			return nil, fmt.Errorf("unknown message type %T", msg)
+			txns, err := transactionsFromStatement(stmt)
+			if err != nil {
+				return asd, nil, errors.Wrap(err, "error parsing transaction")
+			}
+			transactions = append(transactions, txns...)
+		} else {
+			return asd, nil, errors.Errorf("unknown message type %T", msg)
 		}
 	}
-	return transactions, nil
+	for _, msg := range resp.CreditCard {
+		if stmt, ok := msg.(*ofxgo.CCStatementResponse); ok {
+			asd = budget.AccountSensitiveDetails{
+				AccountID: string(stmt.CCAcctFrom.AcctID),
+			}
+			txns, err := transactionsFromCCStatement(stmt)
+			if err != nil {
+				return asd, nil, errors.Wrap(err, "error parsing transaction")
+			}
+			transactions = append(transactions, txns...)
+		} else {
+			return asd, nil, errors.Errorf("unknown message type %T", msg)
+		}
+	}
+	return asd, transactions, nil
 }
-*/
