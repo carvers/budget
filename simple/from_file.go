@@ -1,6 +1,7 @@
 package simple
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -90,6 +91,7 @@ func transactionFromTransaction(t transaction) (budget.Transaction, error) {
 		"fee":                          "FEE",
 		"interest_credit":              "INT",
 		"make_up_credit":               "SRVCHG",
+		"make_up_interest_deposit":     "INT",
 		"migration_interbank_transfer": "XFER",
 		"otc_withdrawal":               "CASH",
 		"pin_purchase":                 "DEBIT",
@@ -99,6 +101,7 @@ func transactionFromTransaction(t transaction) (budget.Transaction, error) {
 		"shared_transfer":              "XFER",
 		"signature_credit":             "CREDIT",
 		"signature_purchase":           "DEBIT",
+		"signature_purchase_reversal":  "CREDIT",
 		"signature_return":             "CREDIT",
 	}
 	transactionType, ok := types[strings.ToLower(t.TransactionType)]
@@ -112,7 +115,7 @@ func transactionFromTransaction(t transaction) (budget.Transaction, error) {
 	case "debit":
 		positive = -1
 	default:
-		return budget.Transaction{}, errors.Errorf("unknown transfer type %q, please open an issue at https://github.com/carvers/budget/issues/new", t.BookkeepingType)
+		return budget.Transaction{}, errors.Errorf("unknown bookkeeping type %q, please open an issue at https://github.com/carvers/budget/issues/new", t.BookkeepingType)
 	}
 	return budget.Transaction{
 		ID:              id,
@@ -132,7 +135,7 @@ func transactionFromTransaction(t transaction) (budget.Transaction, error) {
 	}, nil
 }
 
-func FromReader(r io.Reader) ([]budget.Transaction, error) {
+func FromReader(ctx context.Context, r io.Reader) ([]budget.Transaction, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading stream")

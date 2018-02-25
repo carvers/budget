@@ -1,22 +1,22 @@
 package storers
 
 import (
+	"context"
 	"database/sql"
 
 	"darlinggo.co/pan"
+	yall "yall.in"
 
-	"github.com/apex/log"
 	"github.com/carvers/budget"
 	_ "github.com/lib/pq"
 )
 
 type postgres struct {
-	db  *sql.DB
-	log *log.Logger
+	db *sql.DB
 }
 
-func NewPostgres(db *sql.DB, l *log.Logger) postgres {
-	return postgres{db: db, log: l}
+func NewPostgres(db *sql.DB) postgres {
+	return postgres{db: db}
 }
 
 func importTransactionsSQL(t []budget.Transaction) *pan.Query {
@@ -32,13 +32,13 @@ func importTransactionsSQL(t []budget.Transaction) *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) ImportTransactions(t []budget.Transaction) error {
+func (p postgres) ImportTransactions(ctx context.Context, t []budget.Transaction) error {
 	query := importTransactionsSQL(t)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).Debug("Importing transactions")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("Importing transactions")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -50,13 +50,13 @@ func listTransactionsSQL(f budget.TransactionFilters) *pan.Query {
 	return q
 }
 
-func (p postgres) ListTransactions(f budget.TransactionFilters) ([]budget.Transaction, error) {
+func (p postgres) ListTransactions(ctx context.Context, f budget.TransactionFilters) ([]budget.Transaction, error) {
 	query := listTransactionsSQL(f)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return nil, err
 	}
-	p.log.WithField("query", queryStr).Debug("Listing transactions")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("Listing transactions")
 	rows, err := p.db.Query(queryStr, query.Args()...)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func updateTransactionsSQL(tf budget.TransactionFilters, change budget.Transacti
 	return q
 }
 
-func (p postgres) UpdateTransactions(tf budget.TransactionFilters, change budget.TransactionChange) error {
+func (p postgres) UpdateTransactions(ctx context.Context, tf budget.TransactionFilters, change budget.TransactionChange) error {
 	if change.IsEmpty() {
 		return nil
 	}
@@ -96,7 +96,7 @@ func (p postgres) UpdateTransactions(tf budget.TransactionFilters, change budget
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).Debug("updating transactions")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("updating transactions")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -105,13 +105,13 @@ func createAccountSQL(account budget.Account) *pan.Query {
 	return pan.Insert(account)
 }
 
-func (p postgres) CreateAccount(account budget.Account) error {
+func (p postgres) CreateAccount(ctx context.Context, account budget.Account) error {
 	query := createAccountSQL(account)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).Debug("Creating account")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("Creating account")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -124,7 +124,7 @@ func getAccountSQL(id string) *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) GetAccount(id string) (budget.Account, error) {
+func (p postgres) GetAccount(ctx context.Context, id string) (budget.Account, error) {
 	query := getAccountSQL(id)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
@@ -177,7 +177,7 @@ func updateAccountSQL(id string, change budget.AccountChange) *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) UpdateAccount(id string, change budget.AccountChange) error {
+func (p postgres) UpdateAccount(ctx context.Context, id string, change budget.AccountChange) error {
 	if change.IsEmpty() {
 		return nil
 	}
@@ -186,7 +186,7 @@ func (p postgres) UpdateAccount(id string, change budget.AccountChange) error {
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).WithField("id", id).Debug("updating account")
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("id", id).Debug("updating account")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -199,13 +199,13 @@ func deleteAccountSQL(id string) *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) DeleteAccount(id string) error {
+func (p postgres) DeleteAccount(ctx context.Context, id string) error {
 	query := deleteAccountSQL(id)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).WithField("id", id).Debug("deleting account")
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("id", id).Debug("deleting account")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -217,13 +217,13 @@ func listAccountsSQL() *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) ListAccounts() ([]budget.Account, error) {
+func (p postgres) ListAccounts(ctx context.Context) ([]budget.Account, error) {
 	query := listAccountsSQL()
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return nil, err
 	}
-	p.log.WithField("query", queryStr).Debug("listing account")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("listing account")
 	rows, err := p.db.Query(queryStr, query.Args()...)
 	if err != nil {
 		return nil, err
@@ -254,13 +254,13 @@ func createRecurringsSQL(recurrings []budget.Recurring) *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) CreateRecurrings(recurrings []budget.Recurring) error {
+func (p postgres) CreateRecurrings(ctx context.Context, recurrings []budget.Recurring) error {
 	query := createRecurringsSQL(recurrings)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).WithField("num_groups", len(recurrings)).
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("num_groups", len(recurrings)).
 		Debug("creating recurring groups")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
@@ -273,13 +273,13 @@ func listRecurringsSQL() *pan.Query {
 	return q.Flush(" ")
 }
 
-func (p postgres) ListRecurrings() ([]budget.Recurring, error) {
+func (p postgres) ListRecurrings(ctx context.Context) ([]budget.Recurring, error) {
 	query := listRecurringsSQL()
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return nil, err
 	}
-	p.log.WithField("query", queryStr).Debug("listing recurring groups")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("listing recurring groups")
 	rows, err := p.db.Query(queryStr, query.Args()...)
 	if err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func updateRecurringSQL(id string, change budget.RecurringChange) *pan.Query {
 	return nil
 }
 
-func (p postgres) UpdateRecurring(id string, change budget.RecurringChange) error {
+func (p postgres) UpdateRecurring(ctx context.Context, id string, change budget.RecurringChange) error {
 	if change.IsEmpty() {
 		return nil
 	}
@@ -313,7 +313,7 @@ func (p postgres) UpdateRecurring(id string, change budget.RecurringChange) erro
 	if err != nil {
 		return err
 	}
-	p.log.WithField("query", queryStr).WithField("id", id).Debug("updating recurring group")
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("id", id).Debug("updating recurring group")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }

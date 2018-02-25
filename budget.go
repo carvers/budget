@@ -1,37 +1,41 @@
 package budget
 
-import "github.com/apex/log"
+import (
+	"context"
+
+	yall "yall.in"
+)
 
 //go:generate go-bindata -pkg migrations -o migrations/generated.go sql/
 
 type AccountsStorer interface {
-	CreateAccount(Account) error
-	GetAccount(string) (Account, error)
-	UpdateAccount(string, AccountChange) error
-	DeleteAccount(string) error
-	ListAccounts() ([]Account, error)
+	CreateAccount(context.Context, Account) error
+	GetAccount(context.Context, string) (Account, error)
+	UpdateAccount(context.Context, string, AccountChange) error
+	DeleteAccount(context.Context, string) error
+	ListAccounts(context.Context) ([]Account, error)
 }
 
 type AccountsSensitiveDetailsStorer interface {
-	StoreAccountSensitiveDetails(string, AccountSensitiveDetails) error
-	GetAccountSensitiveDetails(string) (AccountSensitiveDetails, error)
-	DeleteAccountSensitiveDetails(string) error
+	StoreAccountSensitiveDetails(context.Context, string, AccountSensitiveDetails) error
+	GetAccountSensitiveDetails(context.Context, string) (AccountSensitiveDetails, error)
+	DeleteAccountSensitiveDetails(context.Context, string) error
 }
 
 type RecurringStorer interface {
-	CreateRecurrings([]Recurring) error
-	ListRecurrings() ([]Recurring, error)
-	UpdateRecurring(string, RecurringChange) error
+	CreateRecurrings(context.Context, []Recurring) error
+	ListRecurrings(context.Context) ([]Recurring, error)
+	UpdateRecurring(context.Context, string, RecurringChange) error
 }
 
 type TransactionsStorer interface {
-	ImportTransactions([]Transaction) error
-	ListTransactions(TransactionFilters) ([]Transaction, error)
-	UpdateTransactions(TransactionFilters, TransactionChange) error
+	ImportTransactions(context.Context, []Transaction) error
+	ListTransactions(context.Context, TransactionFilters) ([]Transaction, error)
+	UpdateTransactions(context.Context, TransactionFilters, TransactionChange) error
 }
 
 type Dependencies struct {
-	Log               *log.Logger
+	Log               *yall.Logger
 	Accounts          AccountsStorer
 	AccountsSensitive AccountsSensitiveDetailsStorer
 	Recurring         RecurringStorer

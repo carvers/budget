@@ -1,20 +1,22 @@
 package budget
 
 import (
+	"context"
+
 	"github.com/carvers/budget/similar"
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/pkg/errors"
 )
 
-func GroupTransactions(d Dependencies) ([][]Transaction, error) {
+func GroupTransactions(ctx context.Context, d Dependencies) ([][]Transaction, error) {
 	// retrieve a list of all our transactions
-	transactions, err := d.Transactions.ListTransactions(TransactionFilters{})
+	transactions, err := d.Transactions.ListTransactions(ctx, TransactionFilters{})
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing transactions")
 	}
 
 	// retrieve a list of the recurring groups
-	recurring, err := d.Recurring.ListRecurrings()
+	recurring, err := d.Recurring.ListRecurrings(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing recurring groups")
 	}

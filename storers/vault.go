@@ -1,21 +1,21 @@
 package storers
 
 import (
+	"context"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/carvers/budget"
 	"github.com/hashicorp/vault/api"
 	"github.com/pkg/errors"
+	yall "yall.in"
 )
 
 type vault struct {
 	client *api.Client
-	log    *log.Logger
 	root   string
 }
 
-func NewVault(address, root string, log *log.Logger, token string) (vault, error) {
+func NewVault(address, root, token string) (vault, error) {
 	config := api.DefaultConfig()
 	config.Address = address
 	client, err := api.NewClient(config)
@@ -24,7 +24,6 @@ func NewVault(address, root string, log *log.Logger, token string) (vault, error
 	}
 	client.SetToken(token)
 	return vault{
-		log:    log,
 		root:   strings.TrimRight(root, "/"),
 		client: client,
 	}, nil
@@ -78,17 +77,17 @@ func mapFromASD(asd budget.AccountSensitiveDetails) map[string]interface{} {
 	}
 }
 
-func (v vault) StoreAccountSensitiveDetails(id string, asd budget.AccountSensitiveDetails) error {
+func (v vault) StoreAccountSensitiveDetails(ctx context.Context, id string, asd budget.AccountSensitiveDetails) error {
 	path := v.root + "/" + id
 	data := mapFromASD(asd)
-	v.log.WithField("path", path).WithField("id", id).Debug("writing sensitive account details to Vault")
+	yall.FromContext(ctx).WithField("path", path).WithField("id", id).Debug("writing sensitive account details to Vault")
 	_, err := v.client.Logical().Write(path, data)
 	return err
 }
 
-func (v vault) GetAccountSensitiveDetails(id string) (budget.AccountSensitiveDetails, error) {
+func (v vault) GetAccountSensitiveDetails(ctx context.Context, id string) (budget.AccountSensitiveDetails, error) {
 	path := v.root + "/" + id
-	v.log.WithField("path", path).WithField("id", id).Debug("reading sensitive account details in Vault")
+	yall.FromContext(ctx).WithField("path", path).WithField("id", id).Debug("reading sensitive account details in Vault")
 	resp, err := v.client.Logical().Read(path)
 	if err != nil {
 		return budget.AccountSensitiveDetails{}, err
@@ -99,9 +98,9 @@ func (v vault) GetAccountSensitiveDetails(id string) (budget.AccountSensitiveDet
 	return asdFromMap(resp.Data)
 }
 
-func (v vault) DeleteAccountSensitiveDetails(id string) error {
+func (v vault) DeleteAccountSensitiveDetails(ctx context.Context, id string) error {
 	path := v.root + "/" + id
-	v.log.WithField("path", path).WithField("id", id).Debug("removing sensitive account details from Vault")
+	yall.FromContext(ctx).WithField("path", path).WithField("id", id).Debug("removing sensitive account details from Vault")
 	_, err := v.client.Logical().Delete(path)
 	return err
 }

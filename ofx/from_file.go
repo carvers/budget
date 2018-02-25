@@ -1,6 +1,7 @@
 package ofx
 
 import (
+	"context"
 	"io"
 
 	"github.com/aclindsa/ofxgo"
@@ -8,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func FromReader(r io.Reader) (budget.AccountSensitiveDetails, []budget.Transaction, error) {
+func FromReader(ctx context.Context, r io.Reader) (budget.AccountSensitiveDetails, []budget.Transaction, error) {
 	var asd budget.AccountSensitiveDetails
 	resp, err := ofxgo.ParseResponse(r)
 	if err != nil {

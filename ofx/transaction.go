@@ -1,6 +1,7 @@
 package ofx
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -15,7 +16,7 @@ const (
 	ReqTypeCreditCard = "CC"
 )
 
-func FetchTransactions(d budget.Dependencies, account budget.Account, asd budget.AccountSensitiveDetails, clientUID string) ([]budget.Transaction, error) {
+func FetchTransactions(ctx context.Context, d budget.Dependencies, account budget.Account, asd budget.AccountSensitiveDetails, clientUID string) ([]budget.Transaction, error) {
 	uid, err := uuid.GenerateUUID()
 	if err != nil {
 		return nil, errors.Wrap(err, "Error generating UUID for transaction")

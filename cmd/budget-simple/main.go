@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
 
-	"github.com/apex/log"
-	"github.com/apex/log/handlers/cli"
 	"github.com/pkg/errors"
+	yall "yall.in"
+	"yall.in/colour"
 
 	"github.com/carvers/budget"
 	"github.com/carvers/budget/simple"
@@ -20,67 +21,59 @@ func main() {
 	if level == "" {
 		level = "INFO"
 	}
-	lvl, err := log.ParseLevel(level)
-	if err != nil {
-		fmt.Printf("Invalid log level %q; please set LOG_LEVEL to %q, %q, %q, %q, or %q.",
-			level, log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(),
-			log.ErrorLevel.String(), log.FatalLevel.String())
-		os.Exit(1)
-	}
+	log := yall.New(colour.New(os.Stdout, yall.Severity(level)))
 	d := budget.Dependencies{
-		Log: &log.Logger{
-			Level:   lvl,
-			Handler: cli.Default,
-		},
+		Log: log,
 	}
+	ctx := yall.InContext(context.Background(), log)
 
 	// Open the file they specified
 	if len(os.Args) < 2 {
-		d.Log.Error("no filename specified")
+		log.Error("no filename specified")
 		os.Exit(1)
 	}
 	file, err := os.Open(os.Args[1])
 	if err != nil {
-		d.Log.WithError(err).WithField("file", os.Args[1]).Error("error opening file")
+		log.WithError(err).WithField("file", os.Args[1]).Error("error opening file")
 		os.Exit(1)
 	}
 
 	// Set up postgres connection
 	postgres := os.Getenv("PG_DB")
 	if postgres == "" {
-		d.Log.WithError(errors.New("no connection string")).
+		log.WithError(errors.New("no connection string")).
 			Error("error setting up Postgres")
 		os.Exit(1)
 	}
 	db, err := sql.Open("postgres", postgres)
 	if err != nil {
-		d.Log.WithError(err).Error("error connecting to Postgres")
+		log.WithError(err).Error("error connecting to Postgres")
 		os.Exit(1)
 	}
 
-	pg := storers.NewPostgres(db, d.Log)
+	pg := storers.NewPostgres(db)
 	d.Transactions = pg
 	d.Accounts = pg
 
-	transactions, err := simple.FromReader(file)
+	transactions, err := simple.FromReader(ctx, file)
 	if err != nil {
-		d.Log.WithError(err).Error("error parsing Simple transactions")
+		log.WithError(err).Error("error parsing Simple transactions")
 		os.Exit(1)
 	}
 	if len(transactions) < 1 {
-		d.Log.Warn("no transactions")
+		log.Warn("no transactions")
 		os.Exit(1)
 	}
 	accountID := transactions[0].AccountID
-	d.Log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Accounts)).
+	log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Accounts)).
 		Info("persisting account")
 
-	err = d.Accounts.CreateAccount(budget.Account{
+	err = d.Accounts.CreateAccount(ctx, budget.Account{
 		ID:          accountID,
 		AccountType: "CHECKING",
 		Sync:        false,
 	})
-	d.Log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Accounts)).
+	log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Accounts)).
 		Info("persisted account")
 
 	for i := 0; i < (len(transactions)/50)+1; i++ {
@@ -91,17 +84,17 @@ func main() {
 		if len(txns) > 50 {
 			txns = txns[:50]
 		}
-		d.Log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Transactions)).
+		log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Transactions)).
 			WithField("num_transactions", fmt.Sprintf("%d-%d/%d", i*50, i*50+len(txns), len(transactions))).
 			Info("persisting transactions")
 
 		// upsert those transactions into postgres
-		err = d.Transactions.ImportTransactions(txns)
+		err = d.Transactions.ImportTransactions(ctx, txns)
 		if err != nil {
-			d.Log.WithError(err).Error("error saving transactions")
+			log.WithError(err).Error("error saving transactions")
 			os.Exit(1)
 		}
-		d.Log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Transactions)).
+		log.WithField("account", accountID).WithField("storer", fmt.Sprintf("%T", d.Transactions)).
 			WithField("num_transactions", fmt.Sprintf("%d-%d/%d", i*50, i*50+len(txns), len(transactions))).
 			Info("persisted transactions")
 	}
