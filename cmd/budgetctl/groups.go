@@ -145,16 +145,12 @@ func (g groupsPeriodsCommand) Run(args []string) int {
 			totalDays = offset
 		}
 	}
-	log.WithField("total_days", totalDays).WithField("populated_days", len(days)).Info("grouped transactions by day")
+	log.WithField("total_days", totalDays).WithField("populated_days", len(days)).Debug("grouped transactions by day")
 
 	transactionsPerDay := make([]float64, totalDays+1)
-	centsPerDay := make([]float64, totalDays+1)
 	for day, txns := range days {
 		log.WithField("day", day).Debug("processing transactions per day")
 		transactionsPerDay[day] = float64(len(txns))
-		for _, txn := range txns {
-			centsPerDay[day] += float64(txn.Amount)
-		}
 	}
 	txnDensities, txnFreqs := spectral.Pwelch(transactionsPerDay, 1.0, &spectral.PwelchOptions{})
 	txnPSD := zipDensitiesAndFrequencies(txnDensities, txnFreqs)
@@ -163,13 +159,14 @@ func (g groupsPeriodsCommand) Run(args []string) int {
 		log.WithField("density", psd.density).WithField("frequency", psd.frequency).Debug("calculated PSD for transactions")
 	}
 
-	centDensities, centFreqs := spectral.Pwelch(centsPerDay, 1.0, &spectral.PwelchOptions{})
-	centPSD := zipDensitiesAndFrequencies(centDensities, centFreqs)
-	sort.Slice(centPSD, func(i, j int) bool { return centPSD[i].density > centPSD[j].density })
-	for _, psd := range centPSD {
-		log.WithField("density", psd.density).WithField("frequency", psd.frequency).Debug("calculated PSD for amount")
+	var freq float64
+	for _, psd := range txnPSD {
+		freq = psd.frequency
+		if freq != 0 {
+			break
+		}
 	}
-	log.WithField("days_in_period", math.Round(1.0/txnPSD[0].frequency)).Info("calculated period")
+	log.WithField("days_in_period", math.Round(1.0/freq)).Info("calculated period")
 	return 0
 }
 
