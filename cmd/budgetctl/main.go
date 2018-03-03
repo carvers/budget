@@ -28,8 +28,10 @@ func main() {
 
 	// Set up postgres connection
 	postgres := os.Getenv("PG_DB")
+	var db *sql.DB
+	var err error
 	if postgres != "" {
-		db, err := sql.Open("postgres", postgres)
+		db, err = sql.Open("postgres", postgres)
 		if err != nil {
 			log.WithError(err).Error("Error connecting to Postgres")
 			os.Exit(1)
@@ -44,7 +46,6 @@ func main() {
 	// Set up vault connection
 	vaultAddr := os.Getenv("VAULT_ADDR")
 	vaultToken := os.Getenv("VAULT_TOKEN")
-	var err error
 	if vaultToken != "" && vaultAddr != "" {
 		d.AccountsSensitive, err = storers.NewVault(vaultAddr, "budget/secret", vaultToken)
 		if err != nil {
@@ -74,12 +75,20 @@ func main() {
 
 		// detect groups
 		"groups detect": groupsDetectCommandFactory(ctx, ui, d),
+		// detect periods
+		"groups periods": groupsPeriodsCommandFactory(ctx, ui, d),
 
 		// import csv transactions
 		"csv import": csvImportCommandFactory(ctx, ui, d),
 
 		// import simple transactions
 		"simple import": simpleImportCommandFactory(ctx, ui, d),
+
+		// run the API server
+		"server": serverCommandFactory(ctx, ui, d),
+
+		// run database migrations
+		"migrations run": migrationsRunCommandFactory(ctx, ui, db),
 	}
 	c.Autocomplete = true
 

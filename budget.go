@@ -32,6 +32,7 @@ type TransactionsStorer interface {
 	ImportTransactions(context.Context, []Transaction) error
 	ListTransactions(context.Context, TransactionFilters) ([]Transaction, error)
 	UpdateTransactions(context.Context, TransactionFilters, TransactionChange) error
+	Balance(context.Context, string) (int64, error)
 }
 
 type Dependencies struct {

@@ -101,6 +101,38 @@ func (p postgres) UpdateTransactions(ctx context.Context, tf budget.TransactionF
 	return err
 }
 
+func balanceSQL(account string) *pan.Query {
+	var t budget.Transaction
+	q := pan.New("SELECT SUM(" + pan.Column(t, "Amount") + ") FROM " + pan.Table(t))
+	q.Where()
+	q.Comparison(t, "AccountID", "=", account)
+	return q.Flush(" ")
+}
+
+func (p postgres) Balance(ctx context.Context, accountID string) (int64, error) {
+	var bal int64
+	query := balanceSQL(accountID)
+	queryStr, err := query.PostgreSQLString()
+	if err != nil {
+		return 0, err
+	}
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("account", accountID).Debug("retrieving balance")
+	rows, err := p.db.Query(queryStr, query.Args()...)
+	if err != nil {
+		return 0, err
+	}
+	for rows.Next() {
+		err = pan.Unmarshal(rows, &bal)
+		if err != nil {
+			return bal, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return bal, err
+	}
+	return bal, nil
+}
+
 func createAccountSQL(account budget.Account) *pan.Query {
 	return pan.Insert(account)
 }
