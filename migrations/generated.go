@@ -10,6 +10,8 @@
 // sql/20180729_1_recurring_to_groups.sql
 // sql/20180729_2_trend_id.sql
 // sql/20180729_3_groups_constraint.sql
+// sql/20180729_4_group_trend_id.sql
+// sql/20180729_5_trends.sql
 // DO NOT EDIT!
 
 package migrations
@@ -277,6 +279,46 @@ func sql20180729_3_groups_constraintSql() (*asset, error) {
 	return a, nil
 }
 
+var _sql20180729_4_group_trend_idSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x84\xcd\x31\x0e\xc2\x20\x14\x06\xe0\x9d\x53\xfc\x5b\x07\xd3\x13\x74\x7a\xf6\x61\x1c\x9e\x60\x08\xb8\x36\xc4\x36\x0d\x83\xd0\x50\x8c\xd7\x77\x35\x2e\xbd\xc0\xf7\xf5\x3d\x4e\xaf\xb4\xd6\xd8\x16\x84\x4d\x91\x78\xed\xe0\xe9\x2c\x1a\xad\xc6\xbc\xc7\x67\x4b\x25\x4f\x6b\x2d\xef\x6d\x07\x31\x63\xb4\x12\x6e\x06\xad\x2e\x79\x9e\xd2\x8c\x07\xb9\xf1\x4a\x0e\xc6\x7a\x98\x20\x02\xd6\x17\x0a\xe2\xd1\x75\x83\x52\xbf\x3e\x97\x4f\x3e\x1a\xd8\xd9\xfb\x7f\x31\xa8\x6f\x00\x00\x00\xff\xff\x91\x38\xff\x6c\xa6\x00\x00\x00")
+
+func sql20180729_4_group_trend_idSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_sql20180729_4_group_trend_idSql,
+		"sql/20180729_4_group_trend_id.sql",
+	)
+}
+
+func sql20180729_4_group_trend_idSql() (*asset, error) {
+	bytes, err := sql20180729_4_group_trend_idSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "sql/20180729_4_group_trend_id.sql", size: 166, mode: os.FileMode(436), modTime: time.Unix(1532878356, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _sql20180729_5_trendsSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x8c\xce\xb1\x6a\x85\x30\x18\xc5\xf1\x39\xdf\x53\x9c\xed\xde\x4b\x15\xba\x3b\xa5\x9a\x52\x69\xaa\x12\x62\xc1\x49\xc4\xa4\x92\xc1\x44\x3e\x95\xd2\xb7\x2f\x85\x0e\x85\x2e\xf7\xcc\xe7\x0f\xbf\x3c\xc7\xc3\x1a\x16\x9e\x0e\x8f\x7e\xa3\xd2\x28\x69\x15\xac\x7c\xd2\x0a\x07\xfb\xe8\x76\x5c\x49\x04\x07\x21\x00\xbc\x4b\x53\xbe\x48\x83\xa6\xb5\x68\x7a\xad\x51\xa9\x67\xd9\x6b\x8b\xcb\x25\x23\x11\xa7\xd5\xdf\xf3\xfb\x48\x3c\x7b\x37\x6e\x9e\x43\x72\xa3\x9b\xbe\x76\xd4\x8d\xc5\xcf\xfe\x05\x8f\x19\x89\xce\xd4\x6f\xd2\x0c\x78\x55\xc3\x35\xb8\x1b\xdd\x0a\xa2\xbf\xee\x2a\x7d\x46\xaa\x4c\xdb\xfd\xba\xd9\xcf\x27\x73\x88\xcb\xb8\x70\x3a\xb7\xbd\xa0\xef\x00\x00\x00\xff\xff\x9b\xbb\x66\x41\xe6\x00\x00\x00")
+
+func sql20180729_5_trendsSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_sql20180729_5_trendsSql,
+		"sql/20180729_5_trends.sql",
+	)
+}
+
+func sql20180729_5_trendsSql() (*asset, error) {
+	bytes, err := sql20180729_5_trendsSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "sql/20180729_5_trends.sql", size: 230, mode: os.FileMode(436), modTime: time.Unix(1532878552, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -339,6 +381,8 @@ var _bindata = map[string]func() (*asset, error){
 	"sql/20180729_1_recurring_to_groups.sql": sql20180729_1_recurring_to_groupsSql,
 	"sql/20180729_2_trend_id.sql": sql20180729_2_trend_idSql,
 	"sql/20180729_3_groups_constraint.sql": sql20180729_3_groups_constraintSql,
+	"sql/20180729_4_group_trend_id.sql": sql20180729_4_group_trend_idSql,
+	"sql/20180729_5_trends.sql": sql20180729_5_trendsSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -392,6 +436,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"20180729_1_recurring_to_groups.sql": &bintree{sql20180729_1_recurring_to_groupsSql, map[string]*bintree{}},
 		"20180729_2_trend_id.sql": &bintree{sql20180729_2_trend_idSql, map[string]*bintree{}},
 		"20180729_3_groups_constraint.sql": &bintree{sql20180729_3_groups_constraintSql, map[string]*bintree{}},
+		"20180729_4_group_trend_id.sql": &bintree{sql20180729_4_group_trend_idSql, map[string]*bintree{}},
+		"20180729_5_trends.sql": &bintree{sql20180729_5_trendsSql, map[string]*bintree{}},
 	}},
 }}
 

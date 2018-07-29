@@ -6,6 +6,7 @@ type Group struct {
 	ID         string   `json:"id"`
 	Name       string   `json:"name"`
 	AccountIDs []string `json:"account_ids"`
+	TrendID    string   `json:"trend_id"`
 	Finished   bool     `json:"finished"`
 }
 
@@ -14,6 +15,7 @@ func groupFromCore(group budget.Group) Group {
 		ID:         group.ID,
 		Name:       group.Name,
 		AccountIDs: []string(group.AccountIDs),
+		TrendID:    group.TrendID,
 		Finished:   group.Finished,
 	}
 }

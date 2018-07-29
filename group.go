@@ -13,6 +13,7 @@ type Group struct {
 	ID         string
 	Name       string
 	AccountIDs pqarrays.StringArray
+	TrendID    string
 	Finished   bool
 }
 
