@@ -22,10 +22,10 @@ type AccountsSensitiveDetailsStorer interface {
 	DeleteAccountSensitiveDetails(context.Context, string) error
 }
 
-type RecurringStorer interface {
-	CreateRecurrings(context.Context, []Recurring) error
-	ListRecurrings(context.Context) ([]Recurring, error)
-	UpdateRecurring(context.Context, string, RecurringChange) error
+type GroupStorer interface {
+	CreateGroups(context.Context, []Group) error
+	ListGroups(context.Context) ([]Group, error)
+	UpdateGroup(context.Context, string, GroupChange) error
 }
 
 type TransactionsStorer interface {
@@ -39,6 +39,6 @@ type Dependencies struct {
 	Log               *yall.Logger
 	Accounts          AccountsStorer
 	AccountsSensitive AccountsSensitiveDetailsStorer
-	Recurring         RecurringStorer
+	Groups            GroupStorer
 	Transactions      TransactionsStorer
 }

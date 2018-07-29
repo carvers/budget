@@ -34,56 +34,56 @@ func (g groupsDetectCommand) Help() string {
 }
 
 func (g groupsDetectCommand) Run(args []string) int {
-	if g.d.Recurring == nil {
-		g.ui.Error("Must have a storer configured for recurring transactions.")
+	if g.d.Groups == nil {
+		g.ui.Error("Must have a storer configured for transaction groups.")
 		return 1
 	}
 	if g.d.Transactions == nil {
 		g.ui.Error("Must have a storer configured for transactions.")
 		return 1
 	}
-	groups, err := budget.GroupTransactions(g.ctx, g.d)
+	txnGroups, err := budget.GroupTransactions(g.ctx, g.d)
 	if err != nil {
 		yall.FromContext(g.ctx).WithError(err).Error("error grouping transactions")
 		return 1
 	}
-	var recurs []budget.Recurring
+	var groups []budget.Group
 	txnChanges := map[string][]string{}
-	for _, group := range groups {
-		recurs = append(recurs, budget.Recurring{
-			ID: group[0].RecurringID,
+	for _, group := range txnGroups {
+		groups = append(groups, budget.Group{
+			ID: group[0].GroupID,
 		})
 		for _, txn := range group {
-			txnChanges[txn.RecurringID] = append(txnChanges[txn.RecurringID], txn.ID)
+			txnChanges[txn.GroupID] = append(txnChanges[txn.GroupID], txn.ID)
 		}
 	}
 
-	err = g.d.Recurring.CreateRecurrings(g.ctx, recurs)
+	err = g.d.Groups.CreateGroups(g.ctx, groups)
 	if err != nil {
-		yall.FromContext(g.ctx).WithError(err).Error("error creating recurring groups")
+		yall.FromContext(g.ctx).WithError(err).Error("error creating groups")
 		return 1
 	}
-	for recur, txn := range txnChanges {
-		recurID := recur
+	for group, txn := range txnChanges {
+		groupID := group
 		tf := budget.TransactionFilters{
 			IDs: txn,
 		}
 		change := budget.TransactionChange{
-			RecurringID: &recurID,
+			GroupID: &groupID,
 		}
-		yall.FromContext(g.ctx).WithField("group_id", recurID).Info("updating RecurringID on transactions")
+		yall.FromContext(g.ctx).WithField("group_id", groupID).Info("updating GroupID on transactions")
 		err = g.d.Transactions.UpdateTransactions(g.ctx, tf, change)
 		if err != nil {
-			yall.FromContext(g.ctx).WithField("group_id", recurID).WithError(err).Error("error updating RecurringID on transactions")
+			yall.FromContext(g.ctx).WithField("group_id", groupID).WithError(err).Error("error updating GroupID on transactions")
 			return 1
 		}
 	}
-	yall.FromContext(g.ctx).Info("updated RecurringID on transactions")
+	yall.FromContext(g.ctx).Info("updated GroupID on transactions")
 	return 0
 }
 
 func (g groupsDetectCommand) Synopsis() string {
-	return "Detect transactions that may belong to a recurring group, and update them to be part of it."
+	return "Detect transactions that may belong to a group, and update them to be part of it."
 }
 
 func groupsPeriodsCommandFactory(ctx context.Context, ui cli.Ui, d budget.Dependencies) func() (cli.Command, error) {
@@ -107,8 +107,8 @@ func (g groupsPeriodsCommand) Help() string {
 }
 
 func (g groupsPeriodsCommand) Run(args []string) int {
-	if g.d.Recurring == nil {
-		yall.FromContext(g.ctx).Error("must have a storer configured for recurring transactions.")
+	if g.d.Groups == nil {
+		yall.FromContext(g.ctx).Error("must have a storer configured for transaction groups.")
 		return 1
 	}
 	if g.d.Transactions == nil {
@@ -116,21 +116,21 @@ func (g groupsPeriodsCommand) Run(args []string) int {
 		return 1
 	}
 	if len(args) < 1 {
-		yall.FromContext(g.ctx).Error("must specify a recurring ID")
+		yall.FromContext(g.ctx).Error("must specify a group ID")
 		return 1
 	}
-	log := yall.FromContext(g.ctx).WithField("recurring_id", args[0])
+	log := yall.FromContext(g.ctx).WithField("group_id", args[0])
 	log = log.WithField("transactions_storer", fmt.Sprintf("%T", g.d.Transactions))
-	log = log.WithField("groups_storer", fmt.Sprintf("%T", g.d.Recurring))
+	log = log.WithField("groups_storer", fmt.Sprintf("%T", g.d.Groups))
 	transactions, err := g.d.Transactions.ListTransactions(g.ctx, budget.TransactionFilters{
-		RecurringID: &args[0],
+		GroupID: &args[0],
 	})
 	if err != nil {
 		log.WithError(err).Error("error retrieving transactions")
 		return 1
 	}
 	if len(transactions) < 1 {
-		log.Error("no transactions for that recurring ID")
+		log.Error("no transactions for that group ID")
 		return 1
 	}
 
@@ -187,5 +187,5 @@ func zipDensitiesAndFrequencies(d, f []float64) []psd {
 }
 
 func (g groupsPeriodsCommand) Synopsis() string {
-	return "Forecast transactions that may belong to a recurring group, and update them to be part of it."
+	return "Forecast transactions that may belong to a group, and update them to be part of it."
 }

@@ -40,7 +40,7 @@ func main() {
 		pg := storers.NewPostgres(db)
 		d.Transactions = pg
 		d.Accounts = pg
-		d.Recurring = pg
+		d.Groups = pg
 	}
 
 	// Set up vault connection

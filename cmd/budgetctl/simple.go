@@ -48,7 +48,7 @@ func (s simpleImportCommand) Run(args []string) int {
 		return 1
 	}
 
-	file, err := os.Open(os.Args[0])
+	file, err := os.Open(args[0])
 	if err != nil {
 		log.WithError(err).Error("error opening file")
 		return 1

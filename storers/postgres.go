@@ -47,7 +47,8 @@ func listTransactionsSQL(f budget.TransactionFilters) *pan.Query {
 	var t budget.Transaction
 	q := pan.New("SELECT " + pan.Columns(t).String() + " FROM " + pan.Table(t))
 	addTransactionFiltersToQuery(q, f)
-	return q
+	q.OrderBy("date_posted DESC, account_id, amount DESC")
+	return q.Flush(" ")
 }
 
 func (p postgres) ListTransactions(ctx context.Context, f budget.TransactionFilters) ([]budget.Transaction, error) {
@@ -79,8 +80,8 @@ func (p postgres) ListTransactions(ctx context.Context, f budget.TransactionFilt
 func updateTransactionsSQL(tf budget.TransactionFilters, change budget.TransactionChange) *pan.Query {
 	var t budget.Transaction
 	q := pan.New("UPDATE " + pan.Table(t) + " SET")
-	if change.RecurringID != nil {
-		q.Comparison(t, "RecurringID", "=", *change.RecurringID)
+	if change.GroupID != nil {
+		q.Comparison(t, "GroupID", "=", *change.GroupID)
 	}
 	q.Flush(", ")
 	addTransactionFiltersToQuery(q, tf)
@@ -275,77 +276,77 @@ func (p postgres) ListAccounts(ctx context.Context) ([]budget.Account, error) {
 	return accts, nil
 }
 
-func createRecurringsSQL(recurrings []budget.Recurring) *pan.Query {
-	pannable := make([]pan.SQLTableNamer, 0, len(recurrings))
-	for _, r := range recurrings {
-		pannable = append(pannable, r)
+func createGroupsSQL(groups []budget.Group) *pan.Query {
+	pannable := make([]pan.SQLTableNamer, 0, len(groups))
+	for _, g := range groups {
+		pannable = append(pannable, g)
 	}
 	q := pan.Insert(pannable...)
-	q.Expression("ON CONFLICT ON CONSTRAINT " + pan.Table(recurrings[0]) + "_pkey")
+	q.Expression("ON CONFLICT ON CONSTRAINT " + pan.Table(groups[0]) + "_pkey")
 	q.Expression("DO NOTHING")
 	return q.Flush(" ")
 }
 
-func (p postgres) CreateRecurrings(ctx context.Context, recurrings []budget.Recurring) error {
-	query := createRecurringsSQL(recurrings)
+func (p postgres) CreateGroups(ctx context.Context, groups []budget.Group) error {
+	query := createGroupsSQL(groups)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	yall.FromContext(ctx).WithField("query", queryStr).WithField("num_groups", len(recurrings)).
-		Debug("creating recurring groups")
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("num_groups", len(groups)).
+		Debug("creating groups")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
 
-func listRecurringsSQL() *pan.Query {
-	var recur budget.Recurring
-	q := pan.New("SELECT " + pan.Columns(recur).String() + " FROM " + pan.Table(recur))
-	q.OrderByDesc(pan.Column(recur, "ID"))
+func listGroupsSQL() *pan.Query {
+	var group budget.Group
+	q := pan.New("SELECT " + pan.Columns(group).String() + " FROM " + pan.Table(group))
+	q.OrderByDesc(pan.Column(group, "ID"))
 	return q.Flush(" ")
 }
 
-func (p postgres) ListRecurrings(ctx context.Context) ([]budget.Recurring, error) {
-	query := listRecurringsSQL()
+func (p postgres) ListGroups(ctx context.Context) ([]budget.Group, error) {
+	query := listGroupsSQL()
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return nil, err
 	}
-	yall.FromContext(ctx).WithField("query", queryStr).Debug("listing recurring groups")
+	yall.FromContext(ctx).WithField("query", queryStr).Debug("listing groups")
 	rows, err := p.db.Query(queryStr, query.Args()...)
 	if err != nil {
 		return nil, err
 	}
-	var recurs []budget.Recurring
+	var groups []budget.Group
 	for rows.Next() {
-		var recur budget.Recurring
-		err = pan.Unmarshal(rows, &recur)
+		var group budget.Group
+		err = pan.Unmarshal(rows, &group)
 		if err != nil {
-			return recurs, err
+			return groups, err
 		}
-		recurs = append(recurs, recur)
+		groups = append(groups, group)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	return recurs, nil
+	return groups, nil
 }
 
-func updateRecurringSQL(id string, change budget.RecurringChange) *pan.Query {
-	// TODO(paddy): write SQL for updating a recurring group
+func updateGroupSQL(id string, change budget.GroupChange) *pan.Query {
+	// TODO(paddy): write SQL for updating a group
 	return nil
 }
 
-func (p postgres) UpdateRecurring(ctx context.Context, id string, change budget.RecurringChange) error {
+func (p postgres) UpdateGroup(ctx context.Context, id string, change budget.GroupChange) error {
 	if change.IsEmpty() {
 		return nil
 	}
-	query := updateRecurringSQL(id, change)
+	query := updateGroupSQL(id, change)
 	queryStr, err := query.PostgreSQLString()
 	if err != nil {
 		return err
 	}
-	yall.FromContext(ctx).WithField("query", queryStr).WithField("id", id).Debug("updating recurring group")
+	yall.FromContext(ctx).WithField("query", queryStr).WithField("id", id).Debug("updating group")
 	_, err = p.db.Exec(queryStr, query.Args()...)
 	return err
 }
@@ -420,9 +421,9 @@ func addTransactionFiltersToQuery(q *pan.Query, f budget.TransactionFilters) {
 		q.Where()
 		q.Comparison(t, "Name", "=", *f.Name)
 	}
-	if f.RecurringID != nil {
+	if f.GroupID != nil {
 		q.Where()
-		q.Comparison(t, "RecurringID", "=", *f.RecurringID)
+		q.Comparison(t, "GroupID", "=", *f.GroupID)
 	}
 	q.Flush(" AND ")
 }

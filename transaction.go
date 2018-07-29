@@ -38,12 +38,16 @@ type Transaction struct {
 	Name string
 	// Extended name of payee or description of transaction
 	ExtendedName string
+	// Edited name of description, containing user-corrected text
+	EditedName string
 	// Extra information not in Name
 	Memo string
 	// Source of cash for this transaction, if a 401k transaction.
 	Inv401kSource string `sql_column:"inv_401k_source"`
-	// ID of the Recurring group to associate this transaction with.
-	RecurringID string
+	// ID of the group to associate this transaction with.
+	GroupID string
+	// ID of the Trend to associate this transaction wtih.
+	TrendID string
 
 	// The three letter code for the currency the amount is specified in
 	Currency string
@@ -120,15 +124,15 @@ type TransactionFilters struct {
 	CheckNum          *string
 	RefNum            *string
 	Name              *string
-	RecurringID       *string
+	GroupID           *string
 }
 
 type TransactionChange struct {
-	RecurringID *string
+	GroupID *string
 }
 
 func (c TransactionChange) IsEmpty() bool {
-	if c.RecurringID != nil {
+	if c.GroupID != nil {
 		return false
 	}
 	return true
