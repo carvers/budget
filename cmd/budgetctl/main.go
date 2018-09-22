@@ -54,6 +54,23 @@ func main() {
 		}
 	}
 
+	if d.Accounts == nil {
+		log.Error("No accounts storer set")
+		os.Exit(1)
+	}
+	if d.Transactions == nil {
+		log.Error("No transactions storer set")
+		os.Exit(1)
+	}
+	if d.Groups == nil {
+		log.Error("No groups storer set")
+		os.Exit(1)
+	}
+	if d.AccountsSensitive == nil {
+		log.Error("No sensitive account information storer set")
+		os.Exit(1)
+	}
+
 	c := cli.NewCLI("budgetctl", fmt.Sprintf("%s (%s)", version.Tag, version.Hash))
 	c.Args = os.Args[1:]
 	ui := &cli.ColoredUi{
